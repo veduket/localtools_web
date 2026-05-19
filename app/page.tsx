@@ -7,6 +7,7 @@ export default function Home() {
     <div className="overflow-hidden">
       <HeroSection />
       <ToolsOverview />
+      <GitHubStatsSection />
       <StatsBanner />
       <PricingSection />
     </div>
@@ -245,6 +246,112 @@ function PricingSection() {
   )
 }
 
+type RepoData = { name: string; stars: number; forks: number; url: string }
+
+function GitHubStatsSection() {
+  const [repos, setRepos] = useState<RepoData[]>([])
+  const [loading, setLoading] = useState(true)
+  const ref = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    fetch('https://api.github.com/users/veduket/repos?per_page=100&sort=updated')
+      .then(r => r.json())
+      .then((data: { name: string; stargazers_count: number; forks_count: number; html_url: string }[]) => {
+        const names = ['local-dns', 'local-ssl', 'localtools_web']
+        const filtered = data
+          .filter(r => names.includes(r.name))
+          .map(r => ({
+            name: r.name,
+            stars: r.stargazers_count,
+            forks: r.forks_count,
+            url: r.html_url,
+          }))
+        setRepos(filtered)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setVisible(true); observer.disconnect() }
+    }, { threshold: 0.1 })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  if (loading || repos.length === 0) return null
+
+  const totalStars = repos.reduce((s, r) => s + r.stars, 0)
+  const totalForks = repos.reduce((s, r) => s + r.forks, 0)
+
+  return (
+    <section
+      ref={ref}
+      className={`px-6 py-32 transition-all duration-800 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+        visible ? 'opacity-100 translate-y-0 blur-0' : 'opacity-0 translate-y-12 blur-sm'
+      }`}
+    >
+      <div className="max-w-6xl mx-auto text-center">
+        <p className="text-xs font-medium text-white/30 tracking-[0.2em] uppercase mb-4">GitHub</p>
+        <h2 className="text-3xl sm:text-4xl font-bold tracking-tighter mb-4">Community stats</h2>
+        <p className="text-white/40 max-w-[50ch] mx-auto mb-12">
+          Stars and forks across all localtools repositories.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+          {repos.map(repo => (
+            <a
+              key={repo.name}
+              href={repo.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group rounded-2xl border border-white/[0.04] bg-white/[0.02] p-6 hover:bg-white/[0.04] transition-all"
+            >
+              <p className="font-mono text-sm text-white/60 group-hover:text-white/80 transition-colors mb-4">
+                {repo.name}
+              </p>
+              <div className="flex items-center justify-center gap-6">
+                <div className="flex items-center gap-2">
+                  <StarIcon />
+                  <span className="text-lg font-bold tracking-tight text-white/80">
+                    {repo.stars.toLocaleString()}
+                  </span>
+                  <span className="text-xs text-white/30">stars</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <ForkIcon />
+                  <span className="text-lg font-bold tracking-tight text-white/80">
+                    {repo.forks.toLocaleString()}
+                  </span>
+                  <span className="text-xs text-white/30">forks</span>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+
+        <div className="inline-flex items-center gap-6 rounded-2xl border border-white/[0.04] bg-white/[0.02] px-8 py-4">
+          <div className="flex items-center gap-2">
+            <StarIcon />
+            <span className="text-xl font-bold tracking-tight text-[#22d3ee]">{totalStars.toLocaleString()}</span>
+            <span className="text-sm text-white/40">total stars</span>
+          </div>
+          <div className="w-px h-6 bg-white/[0.08]" />
+          <div className="flex items-center gap-2">
+            <ForkIcon />
+            <span className="text-xl font-bold tracking-tight text-[#34d399]">{totalForks.toLocaleString()}</span>
+            <span className="text-sm text-white/40">total forks</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function ArrowRightIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -257,6 +364,24 @@ function GithubIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
       <path fillRule="evenodd" clipRule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+    </svg>
+  )
+}
+
+function StarIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-white/40">
+      <polygon points="8,1 10.5,5.5 15.5,6.5 12,10 13,15.5 8,12.5 3,15.5 4,10 0.5,6.5 5.5,5.5" fill="none" />
+    </svg>
+  )
+}
+
+function ForkIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-white/40">
+      <circle cx="4" cy="4" r="2" /><circle cx="12" cy="4" r="2" /><circle cx="8" cy="12" r="2" />
+      <line x1="4" y1="6" x2="4" y2="10" /><line x1="12" y1="6" x2="12" y2="10" />
+      <line x1="4" y1="10" x2="8" y2="12" /><line x1="12" y1="10" x2="8" y2="12" />
     </svg>
   )
 }
