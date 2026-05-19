@@ -250,27 +250,22 @@ type RepoData = { name: string; stars: number; forks: number; url: string }
 
 function GitHubStatsSection() {
   const [repos, setRepos] = useState<RepoData[]>([])
+  const [totals, setTotals] = useState({ stars: 0, forks: 0 })
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
-    fetch('https://api.github.com/users/veduket/repos?per_page=100&sort=updated')
+    fetch('/api/github-stats')
       .then(r => r.json())
-      .then((data: { name: string; stargazers_count: number; forks_count: number; html_url: string }[]) => {
-        const names = ['local-dns', 'local-ssl', 'localtools_web']
-        const filtered = data
-          .filter(r => names.includes(r.name))
-          .map(r => ({
-            name: r.name,
-            stars: r.stargazers_count,
-            forks: r.forks_count,
-            url: r.html_url,
-          }))
-        setRepos(filtered)
+      .then(data => {
+        if (data.error) { setError(true); setLoading(false); return }
+        setRepos(data.repos)
+        setTotals(data.totals)
         setLoading(false)
       })
-      .catch(() => setLoading(false))
+      .catch(() => { setError(true); setLoading(false) })
   }, [])
 
   useEffect(() => {
@@ -283,10 +278,8 @@ function GitHubStatsSection() {
     return () => observer.disconnect()
   }, [])
 
-  if (loading || repos.length === 0) return null
-
-  const totalStars = repos.reduce((s, r) => s + r.stars, 0)
-  const totalForks = repos.reduce((s, r) => s + r.forks, 0)
+  if (loading) return null
+  if (error || repos.length === 0) return null
 
   return (
     <section
@@ -337,13 +330,13 @@ function GitHubStatsSection() {
         <div className="inline-flex items-center gap-6 rounded-2xl border border-white/[0.04] bg-white/[0.02] px-8 py-4">
           <div className="flex items-center gap-2">
             <StarIcon />
-            <span className="text-xl font-bold tracking-tight text-[#22d3ee]">{totalStars.toLocaleString()}</span>
+            <span className="text-xl font-bold tracking-tight text-[#22d3ee]">{totals.stars.toLocaleString()}</span>
             <span className="text-sm text-white/40">total stars</span>
           </div>
           <div className="w-px h-6 bg-white/[0.08]" />
           <div className="flex items-center gap-2">
             <ForkIcon />
-            <span className="text-xl font-bold tracking-tight text-[#34d399]">{totalForks.toLocaleString()}</span>
+            <span className="text-xl font-bold tracking-tight text-[#34d399]">{totals.forks.toLocaleString()}</span>
             <span className="text-sm text-white/40">total forks</span>
           </div>
         </div>
