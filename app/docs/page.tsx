@@ -13,6 +13,7 @@ export default function DocsPage() {
             title="local-dns"
             description="Local DNS management with profiles, wildcards, zones, and system detection. Route any domain to any IP on your local machine."
             href="/docs/local-dns"
+            gh="veduket/local-dns"
             accent="#22d3ee"
             sections={['Installation', 'Quick start', 'Commands', 'Profiles', 'Zones & Groups']}
           />
@@ -20,6 +21,7 @@ export default function DocsPage() {
             title="local-ssl"
             description="Generate locally-trusted HTTPS certificates for development. Create a Certificate Authority and issue certs for any domain."
             href="/docs/local-ssl"
+            gh="veduket/local-ssl"
             accent="#34d399"
             sections={['Installation', 'Quick start', 'Commands', 'CA management', 'System trust']}
           />
@@ -29,15 +31,16 @@ export default function DocsPage() {
   )
 }
 
-function DocCard({ title, description, href, accent, sections }: {
+function DocCard({ title, description, href, gh, accent, sections }: {
   title: string
   description: string
   href: string
+  gh: string
   accent: string
   sections: string[]
 }) {
   return (
-    <a href={href} className="group block p-1.5 rounded-[1.5rem] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.01]" style={{ background: `linear-gradient(135deg, ${accent}10, transparent 60%)` }}>
+    <div className="p-1.5 rounded-[1.5rem] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]" style={{ background: `linear-gradient(135deg, ${accent}10, transparent 60%)` }}>
       <div className="rounded-[calc(1.5rem-0.375rem)] bg-[#0a0a14] p-8 shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)]">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: `${accent}15` }}>
@@ -46,14 +49,23 @@ function DocCard({ title, description, href, accent, sections }: {
           <h2 className="text-xl font-bold tracking-tight">{title}</h2>
         </div>
         <p className="text-sm text-white/50 mb-5 leading-relaxed">{description}</p>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 mb-5">
           {sections.map(s => (
             <span key={s} className="text-xs px-3 py-1 rounded-full border border-white/[0.04] bg-white/[0.02] text-white/40">
               {s}
             </span>
           ))}
         </div>
+        <div className="flex items-center gap-3">
+          <a href={href} className="inline-flex items-center gap-1.5 text-sm text-white/60 hover:text-white/80 transition-colors">
+            View docs <span className="text-xs text-white/20">↗</span>
+          </a>
+          <span className="text-white/10">|</span>
+          <a href={`https://github.com/${gh}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-white/40 hover:text-white/60 transition-colors">
+            GitHub <span className="text-xs text-white/20">↗</span>
+          </a>
+        </div>
       </div>
-    </a>
+    </div>
   )
 }
