@@ -43,6 +43,9 @@ cargo install local-dns`</CodeBlock>
           <div className="space-y-3">
             <CmdRow cmd="local-dns add <domain> <ip>" desc="Add a DNS entry" opts="--zone, --group, --comment" />
             <CmdRow cmd="local-dns remove <domain>" desc="Remove a DNS entry" />
+            <CmdRow cmd="local-dns move <domain>" desc="Move entry to another zone/group" opts="--zone, --group" />
+            <CmdRow cmd="local-dns copy <domain>" desc="Copy entry to another zone/group" opts="--zone, --group" />
+            <CmdRow cmd="local-dns edit <domain>" desc="Edit IP or comment" opts="--ip, --comment" />
             <CmdRow cmd="local-dns list" desc="List all entries in active profile" />
             <CmdRow cmd="local-dns init" desc="Initialize configuration and services" />
             <CmdRow cmd="local-dns status" desc="Show system status" />
