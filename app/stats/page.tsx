@@ -1,7 +1,9 @@
+export const dynamic = 'force-dynamic'
+
 import { getStats } from '@/lib/telemetry-store'
 
-export default function StatsPage() {
-  const stats = getStats()
+export default async function StatsPage() {
+  const stats = await getStats()
 
   const daysAgo = (ts: number) => {
     const diff = Date.now() / 1000 - ts

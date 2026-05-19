@@ -37,14 +37,15 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, message: 'Thank you for using localtools!' }, { status: 200 })
   } catch (err) {
-    console.error('telemetry error:', err)
-    return NextResponse.json({ ok: false, error: 'invalid payload' }, { status: 400 })
+    const msg = err instanceof Error ? err.message : 'unknown'
+    console.error('telemetry error:', msg)
+    return NextResponse.json({ ok: false, error: msg }, { status: 400 })
   }
 }
 
 export async function GET() {
   try {
-    const stats = getStats()
+    const stats = await getStats()
     return NextResponse.json(stats, { status: 200 })
   } catch (err) {
     console.error('stats error:', err)

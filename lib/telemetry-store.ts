@@ -1,9 +1,11 @@
 import fs from 'fs'
 import path from 'path'
+import os from 'os'
 
-const DATA_DIR = process.env.LOCALTOOLS_DATA_DIR || path.join(process.cwd(), 'data')
+const DATA_DIR = process.env.LOCALTOOLS_DATA_DIR || path.join(os.tmpdir(), 'localtools-data')
 const EVENTS_FILE = path.join(DATA_DIR, 'events.jsonl')
 const USERS_FILE = path.join(DATA_DIR, 'users.json')
+const BLOB_PREFIX = 'localtools/'
 
 export interface TelemetryEvent {
   uuid: string
@@ -32,15 +34,49 @@ export interface UserStats {
   version: string
 }
 
-export async function storeEvent(event: TelemetryEvent) {
-  fs.mkdirSync(DATA_DIR, { recursive: true })
-  const line = JSON.stringify(event) + '\n'
-  fs.appendFileSync(EVENTS_FILE, line, 'utf-8')
-  await updateUser(event)
+function useBlob(): boolean {
+  return !!process.env.BLOB_READ_WRITE_TOKEN
 }
 
-async function updateUser(event: TelemetryEvent) {
-  const users = readUsers()
+async function blobPut(key: string, data: string, type: string) {
+  const { put } = await import('@vercel/blob')
+  await put(BLOB_PREFIX + key, data, { contentType: type, access: 'public' })
+}
+
+async function blobGet(key: string): Promise<string | null> {
+  const { head } = await import('@vercel/blob')
+  const { url } = await head(BLOB_PREFIX + key)
+  const res = await fetch(url)
+  return res.ok ? await res.text() : null
+}
+
+export async function storeEvent(event: TelemetryEvent) {
+  const line = JSON.stringify(event) + '\n'
+
+  if (useBlob()) {
+    // Append to events blob
+    const existing = await blobGet('events.jsonl') || ''
+    await blobPut('events.jsonl', existing + line, 'text/plain')
+
+    // Update users blob
+    let users: Map<string, UserStats> = new Map()
+    const usersRaw = await blobGet('users.json')
+    if (usersRaw) {
+      const parsed = JSON.parse(usersRaw)
+      users = new Map(Object.entries(parsed))
+    }
+    mergeUser(users, event)
+    const obj = Object.fromEntries(users)
+    await blobPut('users.json', JSON.stringify(obj, null, 2), 'application/json')
+  } else {
+    // Fallback: local file system
+    fs.mkdirSync(DATA_DIR, { recursive: true })
+    fs.appendFileSync(EVENTS_FILE, line, 'utf-8')
+    updateLocalUsers(event)
+  }
+}
+
+function mergeUser(users: Map<string, UserStats>, event: TelemetryEvent) {
   const key = `${event.uuid}:${event.tool}`
   const existing = users.get(key)
   if (existing) {
@@ -61,11 +97,29 @@ async function updateUser(event: TelemetryEvent) {
       version: event.version || '',
     })
   }
-  writeUsers(users)
 }
 
-export function getStats() {
-  const users = readUsers()
+function updateLocalUsers(event: TelemetryEvent) {
+  const users = readLocalUsers()
+  mergeUser(users, event)
+  writeLocalUsers(users)
+}
+
+export async function getStats() {
+  let users: Map<string, UserStats>
+
+  if (useBlob()) {
+    const raw = await blobGet('users.json')
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      users = new Map(Object.entries(parsed))
+    } else {
+      users = new Map()
+    }
+  } else {
+    users = readLocalUsers()
+  }
+
   const sorted = Array.from(users.values())
     .sort((a, b) => b.current_age_days - a.current_age_days)
 
@@ -77,11 +131,15 @@ export function getStats() {
     byTool.set(u.tool, t)
   }
 
-  const totalEvents = countEvents()
+  const totalEvents = useBlob()
+    ? (await blobGet('events.jsonl') || '').split('\n').filter(Boolean).length
+    : countLocalEvents()
+
+  const totalCommands = Array.from(users.values()).reduce((s, u) => s + u.total_commands, 0)
 
   return {
     totalUsers: users.size,
-    totalCommands: Array.from(users.values()).reduce((s, u) => s + u.total_commands, 0),
+    totalCommands,
     totalEvents,
     topUsers: sorted.slice(0, 50).map(u => ({
       ...u,
@@ -92,27 +150,23 @@ export function getStats() {
   }
 }
 
-function readUsers(): Map<string, UserStats> {
+function readLocalUsers(): Map<string, UserStats> {
   try {
     const raw = fs.readFileSync(USERS_FILE, 'utf-8')
     const parsed = JSON.parse(raw)
     return new Map(Object.entries(parsed))
-  } catch {
-    return new Map()
-  }
+  } catch { return new Map() }
 }
 
-function writeUsers(users: Map<string, UserStats>) {
+function writeLocalUsers(users: Map<string, UserStats>) {
   const obj = Object.fromEntries(users)
   fs.writeFileSync(USERS_FILE, JSON.stringify(obj, null, 2), 'utf-8')
 }
 
-function countEvents(): number {
+function countLocalEvents(): number {
   try {
     const content = fs.readFileSync(EVENTS_FILE, 'utf-8').trim()
     if (!content) return 0
     return content.split('\n').length
-  } catch {
-    return 0
-  }
+  } catch { return 0 }
 }
