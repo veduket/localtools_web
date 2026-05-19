@@ -40,7 +40,7 @@ function useBlob(): boolean {
 
 async function blobPut(key: string, data: string, type: string) {
   const { put } = await import('@vercel/blob')
-  await put(BLOB_PREFIX + key, data, { contentType: type, access: 'public' })
+  await put(BLOB_PREFIX + key, data, { contentType: type, access: 'public', allowOverwrite: true })
 }
 
 async function blobGet(key: string): Promise<string | null> {
