@@ -3,7 +3,6 @@ import path from 'path'
 import os from 'os'
 
 const DATA_DIR = process.env.LOCALTOOLS_DATA_DIR || path.join(os.tmpdir(), 'localtools-data')
-const EVENTS_FILE = path.join(DATA_DIR, 'events.jsonl')
 const USERS_FILE = path.join(DATA_DIR, 'users.json')
 const BLOB_PREFIX = 'localtools/'
 
@@ -55,32 +54,44 @@ async function blobGet(key: string): Promise<string | null> {
 }
 
 export async function storeEvent(event: TelemetryEvent) {
-  const line = JSON.stringify(event) + '\n'
-
   if (useBlob()) {
-    // Append to events blob
-    const existing = await blobGet('events.jsonl') || ''
-    await blobPut('events.jsonl', existing + line, 'text/plain')
+    const { put } = await import('@vercel/blob')
+    const key = `${BLOB_PREFIX}events/${event.uuid}-${event.tool}-${Date.now()}.json`
+    await put(key, JSON.stringify(event), { contentType: 'application/json', access: 'public' })
 
-    // Update users blob
-    let users: Map<string, UserStats> = new Map()
-    const usersRaw = await blobGet('users.json')
-    if (usersRaw) {
-      const parsed = JSON.parse(usersRaw)
-      users = new Map(Object.entries(parsed))
+    const userKey = `users/${event.uuid}-${event.tool}.json`
+    const existingRaw = await blobGet(userKey)
+    const existing: UserStats | null = existingRaw ? JSON.parse(existingRaw) : null
+
+    const updated: UserStats = existing ? {
+      ...existing,
+      last_seen: event.ts,
+      total_commands: existing.total_commands + (event.event === 'command' ? 1 : 0),
+      current_age_days: Math.max(existing.current_age_days, event.age_days),
+      os: event.os || existing.os,
+      version: event.version || existing.version,
+    } : {
+      uuid: event.uuid,
+      tool: event.tool,
+      first_seen: event.ts,
+      last_seen: event.ts,
+      total_commands: event.event === 'command' ? 1 : 0,
+      current_age_days: event.age_days,
+      os: event.os || '',
+      version: event.version || '',
     }
-    mergeUser(users, event)
-    const obj = Object.fromEntries(users)
-    await blobPut('users.json', JSON.stringify(obj, null, 2), 'application/json')
+
+    await blobPut(userKey, JSON.stringify(updated), 'application/json')
   } else {
-    // Fallback: local file system
+    const line = JSON.stringify(event) + '\n'
     fs.mkdirSync(DATA_DIR, { recursive: true })
-    fs.appendFileSync(EVENTS_FILE, line, 'utf-8')
-    updateLocalUsers(event)
+    fs.appendFileSync(path.join(DATA_DIR, 'events.jsonl'), line, 'utf-8')
+    mergeLocalUser(event)
   }
 }
 
-function mergeUser(users: Map<string, UserStats>, event: TelemetryEvent) {
+function mergeLocalUser(event: TelemetryEvent) {
+  const users = readLocalUsers()
   const key = `${event.uuid}:${event.tool}`
   const existing = users.get(key)
   if (existing) {
@@ -101,56 +112,82 @@ function mergeUser(users: Map<string, UserStats>, event: TelemetryEvent) {
       version: event.version || '',
     })
   }
-}
-
-function updateLocalUsers(event: TelemetryEvent) {
-  const users = readLocalUsers()
-  mergeUser(users, event)
   writeLocalUsers(users)
 }
 
 export async function getStats() {
-  let users: Map<string, UserStats>
-
   if (useBlob()) {
-    const raw = await blobGet('users.json')
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      users = new Map(Object.entries(parsed))
-    } else {
-      users = new Map()
+    const { list } = await import('@vercel/blob')
+
+    let totalEvents = 0
+    try {
+      const events = await list({ prefix: BLOB_PREFIX + 'events/' })
+      totalEvents = events.blobs.length
+    } catch {}
+
+    const usersMap = new Map<string, UserStats>()
+    try {
+      const users = await list({ prefix: BLOB_PREFIX + 'users/' })
+      for (const blob of users.blobs) {
+        const res = await fetch(blob.url)
+        if (res.ok) {
+          const data: UserStats = await res.json()
+          usersMap.set(`${data.uuid}:${data.tool}`, data)
+        }
+      }
+    } catch {}
+
+    const sorted = Array.from(usersMap.values())
+      .sort((a, b) => b.current_age_days - a.current_age_days)
+
+    const byTool = new Map<string, { users: number; commands: number }>()
+    for (const u of usersMap.values()) {
+      const t = byTool.get(u.tool) || { users: 0, commands: 0 }
+      t.users++
+      t.commands += u.total_commands
+      byTool.set(u.tool, t)
+    }
+
+    const totalCommands = Array.from(usersMap.values()).reduce((s, u) => s + u.total_commands, 0)
+
+    return {
+      totalUsers: usersMap.size,
+      totalCommands,
+      totalEvents,
+      topUsers: sorted.slice(0, 50).map(u => ({
+        ...u,
+        first_seen_ts: u.first_seen,
+        last_seen_ts: u.last_seen,
+      })),
+      byTool: Object.fromEntries(byTool),
     }
   } else {
-    users = readLocalUsers()
-  }
+    const users = readLocalUsers()
+    const sorted = Array.from(users.values())
+      .sort((a, b) => b.current_age_days - a.current_age_days)
 
-  const sorted = Array.from(users.values())
-    .sort((a, b) => b.current_age_days - a.current_age_days)
+    const byTool = new Map<string, { users: number; commands: number }>()
+    for (const u of users.values()) {
+      const t = byTool.get(u.tool) || { users: 0, commands: 0 }
+      t.users++
+      t.commands += u.total_commands
+      byTool.set(u.tool, t)
+    }
 
-  const byTool = new Map<string, { users: number; commands: number }>()
-  for (const u of users.values()) {
-    const t = byTool.get(u.tool) || { users: 0, commands: 0 }
-    t.users++
-    t.commands += u.total_commands
-    byTool.set(u.tool, t)
-  }
+    const totalEvents = countLocalEvents()
+    const totalCommands = Array.from(users.values()).reduce((s, u) => s + u.total_commands, 0)
 
-  const totalEvents = useBlob()
-    ? (await blobGet('events.jsonl') || '').split('\n').filter(Boolean).length
-    : countLocalEvents()
-
-  const totalCommands = Array.from(users.values()).reduce((s, u) => s + u.total_commands, 0)
-
-  return {
-    totalUsers: users.size,
-    totalCommands,
-    totalEvents,
-    topUsers: sorted.slice(0, 50).map(u => ({
-      ...u,
-      first_seen_ts: u.first_seen,
-      last_seen_ts: u.last_seen,
-    })),
-    byTool: Object.fromEntries(byTool),
+    return {
+      totalUsers: users.size,
+      totalCommands,
+      totalEvents,
+      topUsers: sorted.slice(0, 50).map(u => ({
+        ...u,
+        first_seen_ts: u.first_seen,
+        last_seen_ts: u.last_seen,
+      })),
+      byTool: Object.fromEntries(byTool),
+    }
   }
 }
 
@@ -169,7 +206,7 @@ function writeLocalUsers(users: Map<string, UserStats>) {
 
 function countLocalEvents(): number {
   try {
-    const content = fs.readFileSync(EVENTS_FILE, 'utf-8').trim()
+    const content = fs.readFileSync(path.join(DATA_DIR, 'events.jsonl'), 'utf-8').trim()
     if (!content) return 0
     return content.split('\n').length
   } catch { return 0 }
