@@ -3,7 +3,7 @@ import { getStats } from '@/lib/telemetry-store'
 
 export async function GET() {
   try {
-    const stats = getStats()
+    const stats = await getStats()
     return NextResponse.json(stats, { status: 200 })
   } catch (err) {
     console.error('stats error:', err)
