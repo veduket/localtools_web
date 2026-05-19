@@ -253,8 +253,6 @@ function GitHubStatsSection() {
   const [totals, setTotals] = useState({ stars: 0, forks: 0 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  const [visible, setVisible] = useState(false)
 
   useEffect(() => {
     fetch('/api/github-stats')
@@ -268,30 +266,15 @@ function GitHubStatsSection() {
       .catch(() => { setError(true); setLoading(false) })
   }, [])
 
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) { setVisible(true); observer.disconnect() }
-    }, { threshold: 0.1 })
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
-
   if (loading) return null
   if (error || repos.length === 0) return null
 
   return (
-    <section
-      ref={ref}
-      className={`px-6 py-32 transition-all duration-800 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-        visible ? 'opacity-100 translate-y-0 blur-0' : 'opacity-0 translate-y-12 blur-sm'
-      }`}
-    >
+    <section className="px-6 py-32">
       <div className="max-w-6xl mx-auto text-center">
         <p className="text-xs font-medium text-white/30 tracking-[0.2em] uppercase mb-4">GitHub</p>
         <h2 className="text-3xl sm:text-4xl font-bold tracking-tighter mb-4">Community stats</h2>
-        <p className="text-white/40 max-w-[50ch] mx-auto mb-12">
+        <p className="text-white/60 max-w-[50ch] mx-auto mb-12">
           Stars and forks across all localtools repositories.
         </p>
 
@@ -304,23 +287,23 @@ function GitHubStatsSection() {
               rel="noopener noreferrer"
               className="group rounded-2xl border border-white/[0.04] bg-white/[0.02] p-6 hover:bg-white/[0.04] transition-all"
             >
-              <p className="font-mono text-sm text-white/60 group-hover:text-white/80 transition-colors mb-4">
+              <p className="font-mono text-sm text-white/80 mb-4">
                 {repo.name}
               </p>
               <div className="flex items-center justify-center gap-6">
                 <div className="flex items-center gap-2">
                   <StarIcon />
-                  <span className="text-lg font-bold tracking-tight text-white/80">
+                  <span className="text-lg font-bold tracking-tight text-white">
                     {repo.stars.toLocaleString()}
                   </span>
-                  <span className="text-xs text-white/30">stars</span>
+                  <span className="text-xs text-white/50">stars</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <ForkIcon />
-                  <span className="text-lg font-bold tracking-tight text-white/80">
+                  <span className="text-lg font-bold tracking-tight text-white">
                     {repo.forks.toLocaleString()}
                   </span>
-                  <span className="text-xs text-white/30">forks</span>
+                  <span className="text-xs text-white/50">forks</span>
                 </div>
               </div>
             </a>
@@ -331,13 +314,13 @@ function GitHubStatsSection() {
           <div className="flex items-center gap-2">
             <StarIcon />
             <span className="text-xl font-bold tracking-tight text-[#22d3ee]">{totals.stars.toLocaleString()}</span>
-            <span className="text-sm text-white/40">total stars</span>
+            <span className="text-sm text-white/70">total stars</span>
           </div>
           <div className="w-px h-6 bg-white/[0.08]" />
           <div className="flex items-center gap-2">
             <ForkIcon />
             <span className="text-xl font-bold tracking-tight text-[#34d399]">{totals.forks.toLocaleString()}</span>
-            <span className="text-sm text-white/40">total forks</span>
+            <span className="text-sm text-white/70">total forks</span>
           </div>
         </div>
       </div>
