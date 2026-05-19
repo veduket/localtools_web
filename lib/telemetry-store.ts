@@ -44,10 +44,14 @@ async function blobPut(key: string, data: string, type: string) {
 }
 
 async function blobGet(key: string): Promise<string | null> {
-  const { head } = await import('@vercel/blob')
-  const { url } = await head(BLOB_PREFIX + key)
-  const res = await fetch(url)
-  return res.ok ? await res.text() : null
+  try {
+    const { head } = await import('@vercel/blob')
+    const { url } = await head(BLOB_PREFIX + key)
+    const res = await fetch(url)
+    return res.ok ? await res.text() : null
+  } catch {
+    return null
+  }
 }
 
 export async function storeEvent(event: TelemetryEvent) {
