@@ -41,6 +41,7 @@ export default function LocalSslDocsPage() {
             <CmdRow cmd="local-ssl show <domain>" desc="Show certificate details" />
             <CmdRow cmd="local-ssl trust" desc="Reinstall CA system trust" />
             <CmdRow cmd="local-ssl status" desc="Show CA and certificate status" />
+            <CmdRow cmd="local-ssl check <domain>" desc="Check local cert or remote server (host:port)" />
             <CmdRow cmd="local-ssl telemetry status" desc="View telemetry settings" />
           </div>
         </Section>
@@ -87,6 +88,21 @@ node server.js --key /etc/local-ssl/certs/myapp.test/key.pem \\
             <p>The tool uses <strong className="text-white/70">rcgen</strong> for certificate generation — a pure Rust implementation
             with no OpenSSL FFI dependency. Keys are stored as PEM files with 600 permissions.</p>
           </div>
+        </Section>
+
+        <Section title="GitHub">
+          <p className="text-sm text-white/50 leading-relaxed">
+            Source code, issues, and contributions:
+          </p>
+          <a
+            href="https://github.com/veduket/local-ssl"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 mt-2 text-sm text-white/60 hover:text-white/80 transition-colors"
+          >
+            <span className="font-mono">github.com/veduket/local-ssl</span>
+            <span className="text-xs text-white/20">↗</span>
+          </a>
         </Section>
       </div>
     </div>

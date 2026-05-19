@@ -41,10 +41,10 @@ function HeroSection() {
                 <ArrowRightIcon />
               </span>
             </a>
-            <a href="https://github.com/veduket" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full px-6 py-3 border border-white/[0.08] text-sm text-white/60 hover:text-white/80 hover:border-white/[0.15] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
-              <GithubIcon />
-              View on GitHub
-            </a>
+            <a href="https://github.com/veduket/localtools_web" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full px-6 py-3 border border-white/[0.08] text-sm text-white/60 hover:text-white/80 hover:border-white/[0.15] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
+               <GithubIcon />
+               View on GitHub
+             </a>
           </div>
         </div>
 
@@ -233,7 +233,7 @@ function PricingSection() {
           Both tools are open-source under the MIT license. No paid tiers, no feature gates,
           no cloud subscriptions. Forever.
         </p>
-        <a href="https://github.com/veduket" target="_blank" rel="noopener noreferrer" className="group relative inline-flex items-center gap-2 rounded-full px-6 py-3 bg-white text-[#050508] font-medium text-sm transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.02] active:scale-[0.98]">
+        <a href="https://github.com/veduket/localtools_web" target="_blank" rel="noopener noreferrer" className="group relative inline-flex items-center gap-2 rounded-full px-6 py-3 bg-white text-[#050508] font-medium text-sm transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.02] active:scale-[0.98]">
           <GithubIcon />
           Star on GitHub
           <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-black/10 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5">

@@ -48,6 +48,7 @@ cargo install local-dns`</CodeBlock>
             <CmdRow cmd="local-dns status" desc="Show system status" />
             <CmdRow cmd="local-dns apply" desc="Apply DNS configuration" />
             <CmdRow cmd="local-dns detect" desc="Detect system DNS configuration" />
+            <CmdRow cmd="local-dns check <domain>" desc="Check entry status (created date, loaded state)" />
             <CmdRow cmd="local-dns logs" desc="View dnsmasq logs" opts="--follow, --errors, --lines" />
             <CmdRow cmd="local-dns telemetry status" desc="View telemetry settings" />
           </div>
@@ -83,6 +84,21 @@ local-dns group create api --zone services
 
 # Add entry to group
 local-dns add myapp.test 127.0.0.1 --zone services --group api`</CodeBlock>
+        </Section>
+
+        <Section title="GitHub">
+          <p className="text-sm text-white/50 leading-relaxed">
+            Source code, issues, and contributions:
+          </p>
+          <a
+            href="https://github.com/veduket/local-dns"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 mt-2 text-sm text-white/60 hover:text-white/80 transition-colors"
+          >
+            <span className="font-mono">github.com/veduket/local-dns</span>
+            <span className="text-xs text-white/20">↗</span>
+          </a>
         </Section>
       </div>
     </div>

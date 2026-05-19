@@ -34,7 +34,7 @@ function Header() {
         <div className="w-px h-4 bg-white/[0.08]" />
         <a href="/docs" className="text-sm text-white/50 hover:text-white/80 transition-colors">Docs</a>
         <a href="/stats" className="text-sm text-white/50 hover:text-white/80 transition-colors">Stats</a>
-        <a href="https://github.com/veduket" target="_blank" rel="noopener noreferrer" className="text-sm text-white/50 hover:text-white/80 transition-colors">GitHub</a>
+        <a href="https://github.com/veduket/localtools_web" target="_blank" rel="noopener noreferrer" className="text-sm text-white/50 hover:text-white/80 transition-colors">GitHub</a>
       </nav>
     </header>
   )
@@ -46,7 +46,7 @@ function Footer() {
       <div className="max-w-6xl mx-auto px-6 py-12 flex flex-col md:flex-row items-center justify-between gap-4">
         <p className="text-sm text-white/30">localtools — MIT License — Yared Getachew</p>
         <div className="flex items-center gap-6">
-          <a href="https://github.com/veduket" target="_blank" rel="noopener noreferrer" className="text-sm text-white/30 hover:text-white/60 transition-colors">GitHub</a>
+          <a href="https://github.com/veduket/localtools_web" target="_blank" rel="noopener noreferrer" className="text-sm text-white/30 hover:text-white/60 transition-colors">GitHub</a>
           <a href="/docs" className="text-sm text-white/30 hover:text-white/60 transition-colors">Documentation</a>
           <a href="/stats" className="text-sm text-white/30 hover:text-white/60 transition-colors">Stats</a>
         </div>
