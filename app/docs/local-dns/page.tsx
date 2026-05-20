@@ -48,6 +48,7 @@ cargo install local-dns`</CodeBlock>
             <CmdRow cmd="local-dns edit <domain>" desc="Edit IP or comment" opts="--ip, --comment" />
             <CmdRow cmd="local-dns list" desc="List all entries in active profile" />
             <CmdRow cmd="local-dns init" desc="Initialize configuration and services" />
+            <CmdRow cmd="local-dns reset" desc="Delete database and re-initialize from scratch" />
             <CmdRow cmd="local-dns status" desc="Show system status" />
             <CmdRow cmd="local-dns apply" desc="Apply DNS configuration" />
             <CmdRow cmd="local-dns detect" desc="Detect system DNS configuration" />

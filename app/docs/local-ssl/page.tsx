@@ -43,6 +43,8 @@ export default function LocalSslDocsPage() {
             <CmdRow cmd="local-ssl status" desc="Show CA and certificate status" />
             <CmdRow cmd="local-ssl check <domain>" desc="Check local cert or remote server (host:port)" />
             <CmdRow cmd="local-ssl telemetry status" desc="View telemetry settings" />
+            <CmdRow cmd="local-ssl telemetry enable" desc="Enable anonymous usage telemetry" />
+            <CmdRow cmd="local-ssl telemetry disable" desc="Disable anonymous usage telemetry" />
           </div>
         </Section>
 
